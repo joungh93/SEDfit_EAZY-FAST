@@ -210,12 +210,9 @@ ezParam = {'filters':dir_flt+"FILTER.RES.latest", 'temp_file':temp_file,
            'laf_file':dir_temp+"LAFcoeff.txt", 'dla_file':dir_temp+"DLAcoeff.txt",
            'zmin':0.1, 'zmax':12.0, 'zstep':0.005, 'H0':68.4, 'Omega_M':0.3, 'Omega_L':0.7}
 
-param_file = ["zphot_hst.param", "zphot_jwst.param", "zphot_total.param",
-              "zphot_RELICS_hstacs.param", "zphot_RELICS_hstnir.param", "zphot_RELICS_total.param"]
-catalog = [dir_eazy_input+"flux_EAZY_hst.cat", dir_eazy_input+"flux_EAZY_jwst.cat", dir_eazy_input+"flux_EAZY_total.cat",
-           dir_eazy_input+"flux_EAZY_RELICS_hstacs.cat", dir_eazy_input+"flux_EAZY_RELICS_hstnir.cat", dir_eazy_input+"flux_EAZY_RELICS_total.cat"]
-output_file = ["photz_hst", "photz_jwst", "photz_total",
-               "photz_RELICS_hstacs", "photz_RELICS_hstnir", "photz_RELICS_total"]
+param_file = ["zphot_hst.param", "zphot_jwst.param", "zphot_total.param"]
+catalog = [dir_eazy_input+"flux_EAZY_hst.cat", dir_eazy_input+"flux_EAZY_jwst.cat", dir_eazy_input+"flux_EAZY_total.cat"]
+output_file = ["photz_hst", "photz_jwst", "photz_total"]
 
 g = open("./eazy.log", "w")
 for i in range(len(param_file)):
