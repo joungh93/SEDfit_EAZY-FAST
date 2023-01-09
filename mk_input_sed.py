@@ -48,7 +48,7 @@ print(np.sum(gal_cnd))
 
 n_obj = np.sum(gal_cnd)
 
-id_flt_hst = [233, 236, 239]    # from 'FILTER.RES.latest.info' file
+id_flt_hst = [233, 236, 239, 202, 203, 204, 205]    # from 'FILTER.RES.latest.info' file
 id_flt_jwst = [363, 365, 366, 375, 376, 377]    # from 'FILTER.RES.latest.info' file
 
 Amags_hst = [0.787, 0.539, 0.333,
@@ -67,20 +67,20 @@ e_mag_offset = 0.0
 # ----- Flux calculations ----- #
 mag_AB_hst, e_mag_AB_hst = np.zeros((n_obj, n_hst)), np.zeros((n_obj, n_hst))
 for i in range(n_hst):
-    mag_AB_hst[:, i] = phot_data[bands_hst[i]].loc[gal_cnd]['mag_iso']  - Amags_hst[i]
+    mag_AB_hst[:, i] = phot_data[bands_hst[i]].loc[gal_cnd]['mag_auto']  - Amags_hst[i]
     # mag_AB_hst[:, i] = phot_data[bands_hst[i]].iloc[gids-1]['mag_auto']  - Amags_hst[i]
     # mag_AB_hst[:, i] = phot_data[bands_hst[i]].iloc[gids-1]['mag_auto_1/2'] - mag_offset - Amags_hst[i]
-    e_mag_AB_hst[:, i] = np.maximum(0.1, phot_data[bands_hst[i]].loc[gal_cnd]['e_mag_iso'])
+    e_mag_AB_hst[:, i] = np.maximum(0.1, phot_data[bands_hst[i]].loc[gal_cnd]['e_mag_auto'])
     # e_mag_AB_hst[:, i] = np.maximum(0.1, phot_data[bands_hst[i]].iloc[gids-1]['e_mag_auto'])
     # e_mag_AB_hst[:, i] = np.maximum(0.1, np.sqrt(phot_data[bands_hst[i]].iloc[gids-1]['e_mag_auto_1/2']**2 + \
     #                                      e_mag_offset**2))
 
 mag_AB_jwst, e_mag_AB_jwst = np.zeros((n_obj, n_jwst)), np.zeros((n_obj, n_jwst))
 for i in range(n_jwst):
-    mag_AB_jwst[:, i] = phot_data[bands_jwst[i]].loc[gal_cnd]['mag_iso']  - Amags_jwst[i]
+    mag_AB_jwst[:, i] = phot_data[bands_jwst[i]].loc[gal_cnd]['mag_auto']  - Amags_jwst[i]
     # mag_AB_jwst[:, i] = phot_data[bands_jwst[i]].iloc[gids-1]['mag_auto']  - Amags_jwst[i]
     # mag_AB_jwst[:, i] = phot_data[bands_jwst[i]].iloc[gids-1]['mag_auto_1/2'] - mag_offset - Amags_jwst[i]
-    e_mag_AB_jwst[:, i] = np.maximum(0.1, phot_data[bands_jwst[i]].loc[gal_cnd]['e_mag_iso'])
+    e_mag_AB_jwst[:, i] = np.maximum(0.1, phot_data[bands_jwst[i]].loc[gal_cnd]['e_mag_auto'])
     # e_mag_AB_jwst[:, i] = np.maximum(0.1, phot_data[bands_jwst[i]].iloc[gids-1]['e_mag_auto'])
     # if (i == idx_ref):
     #     e_mag_AB_jwst[:, i] = phot_data[bands_jwst[i]].iloc[gids-1]['e_mag_auto_1/2']
