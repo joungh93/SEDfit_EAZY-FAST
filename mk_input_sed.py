@@ -10,6 +10,7 @@ import numpy as np
 import glob, os
 import pandas as pd
 import pickle
+from pystilts import wcs_match1
 
 
 # ----- Loading the photometry data ----- #
@@ -20,7 +21,7 @@ if (glob.glob(dir_eazy_input) == []):
 else:
     os.system("rm -rfv "+dir_eazy_input+"*")
 
-# load data
+### Load the photometric data
 with open(dir_phot+"phot_data.pickle", 'rb') as fr:
     phot_data = pickle.load(fr)
 
@@ -33,6 +34,7 @@ bands_jwst = ['f090w', 'f150w', 'f200w',
 n_hst = len(bands_hst)
 n_jwst = len(bands_jwst)
 
+### Selecting extended sources
 mag_cnd = np.ones_like(phot_data['f200w']['num'].values, dtype=bool)
 merr_cnd = np.ones_like(phot_data['f200w']['num'].values, dtype=bool)
 size_cnd = np.ones_like(phot_data['f200w']['num'].values, dtype=bool)
@@ -46,6 +48,7 @@ gal_cnd = (mag_cnd & merr_cnd & size_cnd & \
            (phot_data['f200w']['flag'] <= 4) & (phot_data['f200w']['cl'] < 0.4))
 print(np.sum(gal_cnd))
 
+### Filter information & extinction
 n_obj = np.sum(gal_cnd)
 
 id_flt_hst = [233, 236, 239, 202, 203, 204, 205]    # from 'FILTER.RES.latest.info' file
@@ -88,9 +91,10 @@ for i in range(n_jwst):
     #     e_mag_AB_jwst[:, i] = np.maximum(0.1, np.sqrt(phot_data[bands_jwst[i]].iloc[gids-1]['e_mag_auto_1/2']**2 + \
     #                                           e_mag_offset**2))
 
+### Flux to micro-Jansky
 magzero = 23.90
 
-Fv_hst = 10.0 ** ((magzero-mag_AB_hst)/2.5)   # micro Jansky
+Fv_hst = 10.0 ** ((magzero-mag_AB_hst)/2.5)   # micro-Jansky
 e_Fv_hst = Fv_hst * (np.log(10.0)/2.5) * e_mag_AB_hst
 e_Fv_hst[np.isnan(e_Fv_hst)] = Fv_hst[np.isnan(e_Fv_hst)] / 10.
 Fv_hst[(Fv_hst < 1.0e-10) | (e_Fv_hst < 1.0e-10)] = np.nan
@@ -107,6 +111,20 @@ Fv_jwst[(np.isnan(Fv_jwst)) | (np.isnan(e_Fv_jwst))] = -99.
 e_Fv_jwst[(np.isnan(Fv_jwst)) | (np.isnan(e_Fv_jwst))] = -99.
 
 
+# ----- Reading the spectroscopic catalogs ----- #
+dir_n22 = "/data/jlee/DATA/JWST/First/SMACS0723/"
+df_n22 = pd.read_csv(dir_n22+"Noirot+22_redshift_catalog.txt", skiprows=2, sep=' ')
+# df_n22.head(6)
+z_spec = np.where(np.isnan(df_n22['Z_SPEC'].values), df_n22['Z_GRISM'].values, df_n22['Z_SPEC'].values)
+
+### Matching
+tol = 0.5   # arcsec
+idx_matched, idx_spec, sepr = wcs_match1(phot_data['f200w'].loc[gal_cnd]['ra'].values,
+                                         phot_data['f200w'].loc[gal_cnd]['dec'].values,
+                                         df_n22['RA'].values, df_n22['DEC'].values, tol, ".")
+print(len(idx_matched))
+
+
 # ----- Writing input files ----- #
 def write_input_file(filename, objid, z_spec, flux, err_flux, id_filter):
     f = open(filename, "w")
@@ -121,20 +139,21 @@ def write_input_file(filename, objid, z_spec, flux, err_flux, id_filter):
         f.write(txt+"\n")
     f.close()
 
-z_spec = -1.0 * np.ones_like(phot_data['f200w']['num'].values)
+z_spec2 = -1.0 * np.ones_like(phot_data['f200w'].loc[gal_cnd]['num'].values)
+z_spec2[idx_matched] = z_spec[idx_spec]
 # np.where(np.isnan(phot_data['Z_SPEC']), phot_data['Z_GRISM'], phot_data['Z_SPEC'])
 
 # HST only
 write_input_file(dir_eazy_input+"flux_EAZY_hst.cat", phot_data['f200w'].loc[gal_cnd]['num'].values,
-                 z_spec, Fv_hst, e_Fv_hst, id_flt_hst)
+                 z_spec2, Fv_hst, e_Fv_hst, id_flt_hst)
 
 # JWST only
 write_input_file(dir_eazy_input+"flux_EAZY_jwst.cat", phot_data['f200w'].loc[gal_cnd]['num'].values,
-                 z_spec, Fv_jwst, e_Fv_jwst, id_flt_jwst)
+                 z_spec2, Fv_jwst, e_Fv_jwst, id_flt_jwst)
 
 # HST+JWST
 write_input_file(dir_eazy_input+"flux_EAZY_total.cat", phot_data['f200w'].loc[gal_cnd]['num'].values,
-                 z_spec, np.column_stack([Fv_hst, Fv_jwst]), np.column_stack([e_Fv_hst, e_Fv_jwst]),
+                 z_spec2, np.column_stack([Fv_hst, Fv_jwst]), np.column_stack([e_Fv_hst, e_Fv_jwst]),
                  id_flt_hst + id_flt_jwst)
 
 # # RELICS-matched sources with RELICS fluxes
