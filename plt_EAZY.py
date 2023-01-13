@@ -15,7 +15,7 @@ from matplotlib import pyplot as plt
 from matplotlib.gridspec import GridSpec
 import tqdm
 
-c = 2.99792e+5    # km/s
+c = 2.99792e+10    # cm/s
 
 def read_zout(file):
     with open(file, "r") as f:
