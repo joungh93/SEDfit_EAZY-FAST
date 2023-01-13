@@ -7,6 +7,9 @@ Created on Thu Jan 12 14:31:54 2023
 """
 
 
+import time
+start_time = time.time()
+
 import numpy as np
 import glob, os
 import pandas as pd
@@ -178,6 +181,10 @@ for i in range(len(prefixes)):
                           peak_prob=dz.loc[dz['id'] == objid[j]]['peak_prob'].values[0])
         except:
             pass   
+
+
+# Printing the running time
+print(f"--- {time.time()-start_time:.4f} sec ---")
 
 
 # dz_hst   = read_zout(dir_ezout+'photz_hst.zout')
