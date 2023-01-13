@@ -31,7 +31,7 @@ dir_flt = dir_eazy+"filters/"
 
 dir_FAST_input = "FAST_INPUT/"
 dir_FAST_output = "FAST_OUTPUT/"
-dir_FAST_bestfit = dir_FAST_output+"BEST_FITS/"
+dir_FAST_bestfit = dir_FAST_output+"best_fits/"
 
 f = open(dir_flt+"FILTER.RES.latest","r")
 flt_res_lines = f.readlines()
@@ -115,9 +115,12 @@ def read_outcat(fout_file, bestfit_files, objids):
         dic[obj_key]['flux'] = flx_fit
         dic[obj_key]['wave'] = wav_fit
 
-    df = np.genfromtxt(fout_file, dtype=None, comments="#",
-                       names=("id","z","ltau","metal","lage","Av","lmass",
-                              "lsfr","lssfr","la2t","chi2"))
+    with open(fout_file) as f:
+        ll = f.readlines()
+    fcols = tuple(ll[17].split()[1:])
+    df = np.genfromtxt(fout_file, dtype=None, comments="#", names=fcols)
+                       # names=("id","z","ltau","metal","lage","Av","lmass",
+                       #        "lsfr","lssfr","la2t","chi2"))
 
     return [dic, df]
 
@@ -217,7 +220,7 @@ def draw_sed(objids, out, lambda_c, wav_fit, flx_fit, flx_cat, e_flx_cat, df_out
     plt.close()
 
 
-dir_fig = dir_FAST_output+"Figures/"
+dir_fig = "FAST_Figure/"
 if (glob.glob(dir_fig) == []):
     os.system("mkdir "+dir_fig)
 else:
@@ -226,9 +229,10 @@ else:
 # draw_sed(objids, out, lambda_c, wav_fit, flx_fit, flx_cat, e_flx_cat, df_output)
 
 # HST only
-for i in tqdm.trange(len(objid)):
+for i in tqdm.trange(objid):
     obj_key = f"{objid[i]:05d}"
-    if (np.isnan(dict_fit['hst_fit'][obj_key]['wave']).any()):
+    if ((np.isnan(dict_fit['hst_fit'][obj_key]['wave']).any()) | \
+        (np.isnan(dict_fit['hst_fit'][obj_key]['flux']).any())):
         continue
     else:
         out = dir_fig+"Fig-SED"+obj_key+"_hst.png"
@@ -236,9 +240,10 @@ for i in tqdm.trange(len(objid)):
                  fluxes['hst'][:, i], e_fluxes['hst'][:, i], dict_fit['hst_fout'], suffix_label="(HST only)")
 
 # # JWST only
-for i in tqdm.trange(len(objid)):
+for i in tqdm.trange(objid):
     obj_key = f"{objid[i]:05d}"
-    if (np.isnan(dict_fit['jwst_fit'][obj_key]['wave']).any()):
+    if ((np.isnan(dict_fit['jwst_fit'][obj_key]['wave']).any()) | \
+        (np.isnan(dict_fit['jwst_fit'][obj_key]['flux']).any())):
         continue
     else:
         out = dir_fig+"Fig-SED"+obj_key+"_jwst.png"
@@ -246,9 +251,10 @@ for i in tqdm.trange(len(objid)):
                  fluxes['jwst'][:, i], e_fluxes['jwst'][:, i], dict_fit['jwst_fout'], suffix_label="(JWST only)")
 
 # # HST + JWST
-for i in tqdm.trange(len(objid)):
+for i in tqdm.trange(objid):
     obj_key = f"{objid[i]:05d}"
-    if (np.isnan(dict_fit['total_fit'][obj_key]['wave']).any()):
+    if ((np.isnan(dict_fit['total_fit'][obj_key]['wave']).any()) | \
+        (np.isnan(dict_fit['total_fit'][obj_key]['flux']).any())):
         continue
     else:
         out = dir_fig+"Fig-SED"+obj_key+"_total.png"
