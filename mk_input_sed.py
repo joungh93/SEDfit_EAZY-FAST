@@ -101,20 +101,21 @@ for i in range(n_jwst):
 
 ### Flux to micro-Jansky
 magzero = 23.90
+Fv_min = 10.0 ** ((magzero-30.0)/2.5)
 
 Fv_hst = 10.0 ** ((magzero-mag_AB_hst)/2.5)   # micro-Jansky
 e_Fv_hst = Fv_hst * (np.log(10.0)/2.5) * e_mag_AB_hst
 e_Fv_hst[np.isnan(e_Fv_hst)] = Fv_hst[np.isnan(e_Fv_hst)] / 10.
-Fv_hst[(Fv_hst < 1.0e-10) | (e_Fv_hst < 1.0e-10)] = np.nan
-e_Fv_hst[(Fv_hst < 1.0e-10) | (e_Fv_hst < 1.0e-10)] = np.nan
+Fv_hst[(Fv_hst < 1.0e-10) | (e_Fv_hst < 1.0e-10) | (Fv_hst < Fv_min)] = np.nan
+e_Fv_hst[(Fv_hst < 1.0e-10) | (e_Fv_hst < 1.0e-10) | (Fv_hst < Fv_min)] = np.nan
 Fv_hst[(np.isnan(Fv_hst)) | (np.isnan(e_Fv_hst))] = -99.
 e_Fv_hst[(np.isnan(Fv_hst)) | (np.isnan(e_Fv_hst))] = -99.
 
 Fv_jwst = 10.0 ** ((magzero-mag_AB_jwst)/2.5)   # micro Jansky
 e_Fv_jwst = Fv_jwst * (np.log(10.0)/2.5) * e_mag_AB_jwst
 e_Fv_jwst[np.isnan(e_Fv_jwst)] = Fv_jwst[np.isnan(e_Fv_jwst)] / 10.
-Fv_jwst[(Fv_jwst < 1.0e-10) | (e_Fv_jwst < 1.0e-10)] = np.nan
-e_Fv_jwst[(Fv_jwst < 1.0e-10) | (e_Fv_jwst < 1.0e-10)] = np.nan
+Fv_jwst[(Fv_jwst < 1.0e-10) | (e_Fv_jwst < 1.0e-10) | (Fv_hst < Fv_min)] = np.nan
+e_Fv_jwst[(Fv_jwst < 1.0e-10) | (e_Fv_jwst < 1.0e-10) | (Fv_hst < Fv_min)] = np.nan
 Fv_jwst[(np.isnan(Fv_jwst)) | (np.isnan(e_Fv_jwst))] = -99.
 e_Fv_jwst[(np.isnan(Fv_jwst)) | (np.isnan(e_Fv_jwst))] = -99.
 
@@ -147,7 +148,7 @@ e_Fv2_hst[np.isnan(e_Fv2_hst)] = Fv2_hst[np.isnan(e_Fv2_hst)] / 10.
 Fv2_hst[(Fv2_hst < 1.0e-10) | (e_Fv2_hst < 1.0e-10)] = np.nan
 e_Fv2_hst[(Fv2_hst < 1.0e-10) | (e_Fv2_hst < 1.0e-10)] = np.nan
 Fv2_hst[(np.isnan(Fv2_hst)) | (np.isnan(e_Fv2_hst))] = -99.
-e_Fv2_hst[(np.isnan(Fv2_hst)) | (np.isnan(e_Fv2_hst))] = -99.
+e_Fv2_hst[(np.isnan(Fv2_hst)) | (np.isnan(e_Fv2_hst)) | (Fv2_hst == -99.)] = -99.
 
 Fv2_jwst = 10.0 ** ((magzero-mag2_AB_jwst)/2.5)   # micro Jansky
 e_Fv2_jwst = Fv2_jwst * (np.log(10.0)/2.5) * e_mag2_AB_jwst
@@ -155,7 +156,7 @@ e_Fv2_jwst[np.isnan(e_Fv2_jwst)] = Fv2_jwst[np.isnan(e_Fv2_jwst)] / 10.
 Fv2_jwst[(Fv2_jwst < 1.0e-10) | (e_Fv2_jwst < 1.0e-10)] = np.nan
 e_Fv2_jwst[(Fv2_jwst < 1.0e-10) | (e_Fv2_jwst < 1.0e-10)] = np.nan
 Fv2_jwst[(np.isnan(Fv2_jwst)) | (np.isnan(e_Fv2_jwst))] = -99.
-e_Fv2_jwst[(np.isnan(Fv2_jwst)) | (np.isnan(e_Fv2_jwst))] = -99.
+e_Fv2_jwst[(np.isnan(Fv2_jwst)) | (np.isnan(e_Fv2_jwst)) | (Fv2_jwst == -99.)] = -99.
 
 
 ### Matching
@@ -225,59 +226,57 @@ write_input_file(dir_eazy_input+"flux_EAZY_total_run4.cat",
                  np.column_stack([e_Fv_hst[z_spec2 > 0.], e_Fv_jwst[z_spec2 > 0.]]),
                  id_flt_hst + id_flt_jwst)
 
-# # HST+JWST - RUN #5
-# write_input_file(dir_eazy_input+"flux_EAZY_total_run5.cat",
+# HST+JWST - RUN #5
+write_input_file(dir_eazy_input+"flux_EAZY_total_run5.cat",
+                 phot_data['f200w'].loc[obj_cnd]['num'].values[z_spec2 > 0.],
+                 z_spec2[z_spec2 > 0.],
+                 np.column_stack([Fv_hst[z_spec2 > 0.], Fv_jwst[z_spec2 > 0.]]),
+                 np.column_stack([e_Fv_hst[z_spec2 > 0.], e_Fv_jwst[z_spec2 > 0.]]),
+                 id_flt_hst + id_flt_jwst)
+
+# # HST+JWST - RUN #6
+# write_input_file(dir_eazy_input+"flux_EAZY_total_run6.cat",
 #                  phot_data['f200w'].loc[obj_cnd]['num'].values[z_spec2 > 0.],
 #                  z_spec2[z_spec2 > 0.],
 #                  np.column_stack([Fv_hst[z_spec2 > 0.], Fv_jwst[z_spec2 > 0.]]),
 #                  np.column_stack([e_Fv_hst[z_spec2 > 0.], e_Fv_jwst[z_spec2 > 0.]]),
 #                  id_flt_hst + id_flt_jwst)
 
-# # JWST fluxes from Weaver+23
-# write_input_file(dir_eazy_input+"flux_EAZY_jwst_w23.cat", phot_data['f200w'].loc[obj_cnd]['num'].values[idx_matched],
-#                  z_spec2[idx_matched], Fv2_jwst[idx_spec], e_Fv2_jwst[idx_spec], id_flt_jwst)
 
-# # # HST+JWST fluxes from Weaver+23
-# write_input_file(dir_eazy_input+"flux_EAZY_total_w23.cat", phot_data['f200w'].loc[obj_cnd]['num'].values[idx_matched],
-#                  z_spec2[idx_matched], np.column_stack([Fv2_hst[idx_spec], Fv2_jwst[idx_spec]]),
-#                  np.column_stack([e_Fv2_hst[idx_spec], e_Fv2_jwst[idx_spec]]), id_flt_hst + id_flt_jwst)
+# ##### For sending catalog to TW Kim #####
+# def write_input_file2(filename, objid, z_spec, flux, err_flux, id_filter):
+#     f = open(filename, "w")
+#     columns = "id,z_spec,"
+#     columns += "f435w,e_f435w,f606w,e_f606w,f814w,e_f814,"
+#     columns += "f105w,e_f105w,f125w,e_f125w,f140w,e_f140w,f160w,e_f160w,"
+#     columns += "f115w,e_f115w,f150w,e_f150w,f200w,e_f200w,"
+#     columns += "f277w,e_f277w,f356w,e_f356w,f410m,e_f410m,f444w,e_f444w"
+#     # columns = "# id,z_spec,"
+#     # for i in range(len(id_filter)):
+#         # columns += f"F{id_filter[i]:d},E{id_filter[i]:d},"
+#     f.write(columns+"\n")
+#     for j in range(len(objid)):
+#         txt = f"{objid[j]:d},{z_spec[j]:.4f},"
+#         for i in range(len(id_filter)):
+#             txt += f"{flux[j, i]:5.3e},{err_flux[j, i]:5.3e}"           
+#             if (i < range(len(id_filter))[-1]):
+#                 txt += ","
+#         f.write(txt+"\n")
+#     f.close()
 
-# # RELICS-matched sources with RELICS fluxes
-# from pystilts import wcs_match1
+# write_input_file2(dir_eazy_input+"A2744_flux_with_redshift.csv",
+#                   phot_data['f200w'].loc[obj_cnd]['num'].values[z_spec2 > 0.],
+#                   z_spec2[z_spec2 > 0.],
+#                   np.column_stack([Fv_hst[z_spec2 > 0.], Fv_jwst[z_spec2 > 0.]]),
+#                   np.column_stack([e_Fv_hst[z_spec2 > 0.], e_Fv_jwst[z_spec2 > 0.]]),
+#                   id_flt_hst + id_flt_jwst)
 
-# dir_clu = "/data/jlee/DATA/JWST/First/SMACS0723/Ferreira+22/RELICS/cat/"
-# catname = "hlsp_relics_hst_acs-wfc3ir_smacs0723-73_multi_v1_cat.txt"
+# write_input_file2(dir_eazy_input+"A2744_flux_without_redshift.csv",
+#                   phot_data['f200w'].loc[obj_cnd]['num'].values[z_spec2 < 0.],
+#                   z_spec2[z_spec2 < 0.],
+#                   np.column_stack([Fv_hst[z_spec2 < 0.], Fv_jwst[z_spec2 < 0.]]),
+#                   np.column_stack([e_Fv_hst[z_spec2 < 0.], e_Fv_jwst[z_spec2 < 0.]]),
+#                   id_flt_hst + id_flt_jwst)
+# ##########
 
-# with open(dir_clu+catname, "r") as f:
-#     ll = f.readlines()
 
-# colnames = ll[128].split()[1:]
-# df_relics = np.genfromtxt(dir_clu+catname, dtype=None, skip_header=129, names=colnames)
-# # df_relics = pd.read_fwf(dir_clu+catname, comment="#", skiprows=129, header=None, names=colnames,
-# #                         na_values='inf')
-
-# tol = 0.5   # arcsec
-# id_n22, id_relics, sepr = wcs_match1(phot_data['RA'].values, phot_data['DEC'].values,
-#                                      df_relics['RA'], df_relics['Dec'], tol, ".")
-# print(len(id_n22))
-
-# band_relics = ['f435w', 'f606w', 'f814w', 'f105w', 'f125w', 'f140w', 'f160w']
-# id_flt_relics = [233, 236, 239, 202, 203, 204, 205]
-# Fv_relics, e_Fv_relics = np.zeros((len(df_relics), len(band_relics))), np.zeros((len(df_relics), len(band_relics)))
-# for i in range(len(band_relics)):
-#     Fv_relics[:, i] = np.where(np.isnan(df_relics[band_relics[i]+'_fluxnJy']),
-#                                np.nan, df_relics[band_relics[i]+'_fluxnJy'] * 1.0e-3)
-#     e_Fv_relics[:, i] = np.where(np.isnan(df_relics[band_relics[i]+'_fluxnJyerr']),
-#                                  np.nan, df_relics[band_relics[i]+'_fluxnJyerr'] * 1.0e-3)
-# fault = ((Fv_relics < 0.) | (np.isnan(Fv_relics)) | (np.isinf(Fv_relics)) | \
-#          (e_Fv_relics < 0.) | (np.isnan(e_Fv_relics)) | (np.isinf(e_Fv_relics)))
-# Fv_relics[fault], e_Fv_relics[fault] = -99., -99.
-
-# write_input_file(dir_eazy_input+"flux_EAZY_RELICS_hstacs.cat", phot_data['ID'].values[id_n22],
-#                  z_spec[id_n22], Fv_relics[id_relics, :3], e_Fv_relics[id_relics, :3], id_flt_relics[:3])
-
-# write_input_file(dir_eazy_input+"flux_EAZY_RELICS_hstnir.cat", phot_data['ID'].values[id_n22],
-#                  z_spec[id_n22], Fv_relics[id_relics, 3:], e_Fv_relics[id_relics, 3:], id_flt_relics[3:])
-
-# write_input_file(dir_eazy_input+"flux_EAZY_RELICS_total.cat", phot_data['ID'].values[id_n22],
-#                  z_spec[id_n22], Fv_relics[id_relics, :], e_Fv_relics[id_relics, :], id_flt_relics)
